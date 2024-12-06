@@ -5,9 +5,6 @@ class MemoryGame {
         this.movesDisplay = document.getElementById('moves');
         this.timerDisplay = document.getElementById('timer');
         this.levelDisplay = document.getElementById('current-level');
-        this.bestTimeDisplay = document.getElementById('best-time-display');
-        this.currentScoreDisplay = document.getElementById('current-score');
-        this.currentUserDisplay = document.getElementById('current-user');
         
         // Login elements
         this.loginScreen = document.getElementById('login-screen');
@@ -18,17 +15,12 @@ class MemoryGame {
         
         // Modal elements
         this.leaderboardModal = document.getElementById('leaderboard-modal');
-        this.gameOverModal = document.getElementById('game-over-modal');
-        this.leaderboardBody = document.getElementById('leaderboard-body');
         this.leaderboardList = document.getElementById('leaderboard-list');
         
         // Buttons
         this.restartButton = document.getElementById('restart');
         this.logoutButton = document.getElementById('logout');
         this.showLeaderboardButton = document.getElementById('show-leaderboard');
-        this.closeLeaderboardButton = document.getElementById('close-leaderboard');
-        this.tryAgainButton = document.getElementById('try-again');
-        this.viewLeaderboardButton = document.getElementById('view-leaderboard');
         
         // Game state
         this.cards = [];
@@ -40,8 +32,6 @@ class MemoryGame {
         this.timerInterval = null;
         this.timeLeft = 15;
         this.currentLevel = 1;
-        this.bonusTimeEarned = false;
-        this.alsuiBonusEarned = false;
         this.currentUser = null;
         this.matchedPairs = 0;
         this.isProcessing = false;
@@ -93,7 +83,6 @@ class MemoryGame {
             const userId = this.userIdInput.value.trim();
             if (this.validateUserId(userId)) {
                 this.currentUser = userId;
-                this.currentUserDisplay.textContent = `User: ${userId}`;
                 this.loginScreen.style.display = 'none';
                 this.gameContainer.style.display = 'block';
                 this.init();
@@ -106,42 +95,20 @@ class MemoryGame {
             }
         });
 
-        this.logoutButton.addEventListener('click', () => {
-            this.currentUser = null;
-            this.userIdInput.value = '';
-            this.loginScreen.style.display = 'block';
-            this.gameContainer.style.display = 'none';
-            clearInterval(this.timerInterval);
-        });
+        if (this.logoutButton) {
+            this.logoutButton.addEventListener('click', () => {
+                this.currentUser = null;
+                this.userIdInput.value = '';
+                this.loginScreen.style.display = 'block';
+                this.gameContainer.style.display = 'none';
+                clearInterval(this.timerInterval);
+            });
+        }
     }
 
     initializeLeaderboard() {
-        // Tab handling
-        document.querySelectorAll('.tab-button').forEach(button => {
-            button.addEventListener('click', () => {
-                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-                button.classList.add('active');
-                this.updateLeaderboard(button.dataset.level);
-            });
-        });
-
         // Modal buttons
         this.showLeaderboardButton.addEventListener('click', () => {
-            this.leaderboardModal.classList.add('show');
-            this.updateLeaderboard('all');
-        });
-
-        this.closeLeaderboardButton.addEventListener('click', () => {
-            this.leaderboardModal.classList.remove('show');
-        });
-
-        this.tryAgainButton.addEventListener('click', () => {
-            this.gameOverModal.classList.remove('show');
-            this.restart();
-        });
-
-        this.viewLeaderboardButton.addEventListener('click', () => {
-            this.gameOverModal.classList.remove('show');
             this.leaderboardModal.classList.add('show');
             this.updateLeaderboard('all');
         });
@@ -184,36 +151,42 @@ class MemoryGame {
     }
 
     init() {
-        // Clear existing game state
+        // Clear the game board
         this.gameBoard.innerHTML = '';
         this.cards = [];
         this.flippedCards = [];
         this.moves = 0;
-        this.score = 0;
         this.isLocked = false;
         this.gameStarted = false;
-        this.bonusTimeEarned = false;
-        this.alsuiBonusEarned = false;
         clearInterval(this.timerInterval);
 
         // Update displays
         this.movesDisplay.textContent = this.moves;
         this.levelDisplay.textContent = this.currentLevel;
-        this.currentScoreDisplay.textContent = `Score: ${this.score}`;
 
         // Get level configuration and set timer
         const levelConfig = this.levels[this.currentLevel];
         this.timeLeft = levelConfig.time;
         this.timerDisplay.textContent = this.timeLeft;
 
-        // Get cards for current level
+        // Create pairs of cards
         const levelSymbols = this.symbols.slice(0, levelConfig.pairs);
-        const allCards = [...levelSymbols, ...levelSymbols];
-        const shuffledCards = this.shuffleArray(allCards);
+        const cardSymbols = [...levelSymbols, ...levelSymbols];
+        const shuffledCards = this.shuffleArray(cardSymbols);
 
         // Create and add cards to the board
         shuffledCards.forEach(symbol => {
-            const card = this.createCard(symbol);
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-front"></div>
+                    <div class="card-back">
+                        ${symbol}
+                    </div>
+                </div>
+            `;
+            card.addEventListener('click', () => this.handleCardClick(card));
             this.gameBoard.appendChild(card);
             this.cards.push(card);
         });
@@ -221,75 +194,54 @@ class MemoryGame {
         // Set grid layout
         const columns = Math.ceil(Math.sqrt(levelConfig.pairs * 2));
         this.gameBoard.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
-
-        // Update best time
-        const bestTimes = JSON.parse(localStorage.getItem('bestTimes') || '{}');
-        const userBestTimes = bestTimes[this.currentUser] || {};
-        const levelBestTime = userBestTimes[this.currentLevel] || '--';
-        this.bestTimeDisplay.textContent = `Best Time: ${levelBestTime}`;
     }
 
-    createCard(symbol) {
-        const template = document.getElementById('card-template');
-        const card = template.content.cloneNode(true).querySelector('.card');
-        const front = card.querySelector('.card-front');
-        front.innerHTML = symbol;
-        
-        card.addEventListener('click', () => this.flipCard(card));
-        return card;
-    }
+    handleCardClick(card) {
+        if (this.isLocked || card.classList.contains('matched') || this.flippedCards.includes(card)) {
+            return;
+        }
 
-    flipCard(card) {
-        if (this.isProcessing || card.classList.contains('flipped') || this.flippedCards.length >= 2) return;
+        if (!this.gameStarted) {
+            this.startTimer();
+            this.gameStarted = true;
+        }
 
         card.classList.add('flipped');
         this.flippedCards.push(card);
 
         if (this.flippedCards.length === 2) {
-            this.isProcessing = true;
             this.moves++;
-            document.getElementById('moves').textContent = this.moves;
+            this.movesDisplay.textContent = this.moves;
+            this.isLocked = true;
 
-            const [card1, card2] = this.flippedCards;
-            if (card1.querySelector('.card-front').innerHTML === card2.querySelector('.card-front').innerHTML) {
+            const [firstCard, secondCard] = this.flippedCards;
+            const firstSymbol = firstCard.querySelector('.card-back').innerHTML.trim();
+            const secondSymbol = secondCard.querySelector('.card-back').innerHTML.trim();
+
+            if (firstSymbol === secondSymbol) {
                 // Match found
                 setTimeout(() => {
-                    card1.classList.add('matched');
-                    card2.classList.add('matched');
-                    this.matchedPairs++;
-                    this.checkLevelComplete();
+                    firstCard.classList.add('matched');
+                    secondCard.classList.add('matched');
                     this.flippedCards = [];
-                    this.isProcessing = false;
+                    this.isLocked = false;
+
+                    // Check for level completion
+                    const matchedPairs = document.querySelectorAll('.card.matched').length / 2;
+                    if (matchedPairs === this.levels[this.currentLevel].pairs) {
+                        this.gameOver(true);
+                    }
                 }, 500);
             } else {
-                // No match
+                // No match - flip cards back
                 setTimeout(() => {
-                    card1.classList.remove('flipped');
-                    card2.classList.remove('flipped');
+                    firstCard.classList.remove('flipped');
+                    secondCard.classList.remove('flipped');
                     this.flippedCards = [];
-                    this.isProcessing = false;
+                    this.isLocked = false;
                 }, 1000);
             }
         }
-    }
-
-    checkLevelComplete() {
-        if (this.matchedPairs === this.currentLevel + 2) {
-            const gameBoard = document.querySelector('.game-board');
-            gameBoard.classList.add('level-complete');
-            
-            setTimeout(() => {
-                gameBoard.classList.remove('level-complete');
-                this.currentLevel++;
-                document.getElementById('current-level').textContent = this.currentLevel;
-                this.startLevel();
-            }, 1000);
-        }
-    }
-
-    startLevel() {
-        this.matchedPairs = 0;
-        this.init();
     }
 
     startTimer() {
@@ -318,7 +270,6 @@ class MemoryGame {
             const movesPenalty = Math.max(0, (this.moves - this.levels[this.currentLevel].pairs * 2) * 5);
             const levelScore = (this.levels[this.currentLevel].pairs * 100) + timeBonus - movesPenalty;
             this.score += levelScore;
-            this.currentScoreDisplay.textContent = `Score: ${this.score}`;
 
             // Update best time if better
             const bestTimes = JSON.parse(localStorage.getItem('bestTimes') || '{}');
@@ -358,60 +309,6 @@ class MemoryGame {
         }
     }
 
-    showNotification(message) {
-        const notification = document.createElement('div');
-        notification.className = 'notification';
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 100);
-
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
-        }, 2000);
-    }
-
-    addEventListeners() {
-        this.cards.forEach(card => {
-            card.addEventListener('click', () => this.flipCard(card));
-        });
-
-        this.restartButton.addEventListener('click', () => {
-            this.currentLevel = 1;
-            this.init();
-        });
-    }
-
-    calculateScore() {
-        const baseScore = this.currentLevel * 100;
-        const timeBonus = this.timeLeft * 10;
-        const movesPenalty = Math.max(0, this.moves - (this.levels[this.currentLevel].pairs * 2)) * 5;
-        return Math.max(0, baseScore + timeBonus - movesPenalty);
-    }
-
-    updateScore() {
-        this.score = this.calculateScore();
-        this.currentScoreDisplay.textContent = `Score: ${this.score}`;
-    }
-
-    saveScore() {
-        const scores = JSON.parse(localStorage.getItem('scores') || '[]');
-        scores.push({
-            user: this.currentUser,
-            level: this.currentLevel,
-            score: this.score,
-            time: Date.now()
-        });
-        scores.sort((a, b) => b.score - a.score);
-        localStorage.setItem('scores', JSON.stringify(scores.slice(0, 100))); // Keep top 100 scores
-        this.updateLeaderboardPreview();
-    }
-
     updateLeaderboard(level = 'all') {
         const scores = JSON.parse(localStorage.getItem('scores') || '[]');
         let filteredScores = scores;
@@ -419,15 +316,12 @@ class MemoryGame {
             filteredScores = scores.filter(s => s.level === parseInt(level));
         }
 
-        this.leaderboardBody.innerHTML = filteredScores
+        this.leaderboardList.innerHTML = filteredScores
             .slice(0, 10)
             .map((score, index) => `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${score.user}</td>
-                    <td>${score.level}</td>
-                    <td>${score.score}</td>
-                </tr>
+                <div class="preview-score">
+                    ${index + 1}. ${score.user} - Level ${score.level} - ${score.score} pts
+                </div>
             `).join('');
     }
 
