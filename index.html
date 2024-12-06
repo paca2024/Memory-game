@@ -15,10 +15,6 @@
             <button id="start-game">Start Game</button>
             <div id="login-error" class="error-message"></div>
         </div>
-        <div class="leaderboard-preview">
-            <h2>Top Players</h2>
-            <div id="leaderboard-list"></div>
-        </div>
     </div>
 
     <div id="game-container" class="container" style="display: none;">
@@ -34,7 +30,6 @@
         <div class="controls">
             <button id="restart" class="btn">Restart Game</button>
             <button id="logout" class="secondary-button">Change User</button>
-            <button id="show-leaderboard" class="secondary-button">Leaderboard</button>
         </div>
     </div>
 
@@ -45,44 +40,16 @@
         </div>
     </template>
 
-    <div id="leaderboard-modal" class="modal">
-        <div class="modal-content">
-            <h2>Leaderboard</h2>
-            <div class="tabs">
-                <button class="tab-button active" data-level="all">All Levels</button>
-                <button class="tab-button" data-level="1">Level 1</button>
-                <button class="tab-button" data-level="2">Level 2</button>
-                <button class="tab-button" data-level="3">Level 3</button>
-            </div>
-            <div class="leaderboard-container">
-                <table id="leaderboard-table">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Player</th>
-                            <th>Level</th>
-                            <th>Score</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboard-body"></tbody>
-                </table>
-            </div>
-            <button id="close-leaderboard" class="secondary-button">Close</button>
-        </div>
-    </div>
-
     <div id="game-over-modal" class="modal">
         <div class="modal-content">
             <h2>Game Over!</h2>
             <div class="game-over-stats">
-                <p>Player: <span id="final-player"></span></p>
                 <p>Level: <span id="final-level"></span></p>
+                <p>Moves: <span id="final-moves"></span></p>
                 <p>Score: <span id="final-score"></span></p>
-                <p>Time Left: <span id="final-time"></span></p>
             </div>
             <div class="game-over-buttons">
                 <button id="try-again">Try Again</button>
-                <button id="view-leaderboard" class="secondary-button">View Leaderboard</button>
             </div>
         </div>
     </div>

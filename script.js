@@ -13,20 +13,14 @@ class MemoryGame {
         this.startGameButton = document.getElementById('start-game');
         this.loginError = document.getElementById('login-error');
         
-        // Modal elements
-        this.leaderboardModal = document.getElementById('leaderboard-modal');
-        this.leaderboardList = document.getElementById('leaderboard-list');
-        
         // Buttons
         this.restartButton = document.getElementById('restart');
         this.logoutButton = document.getElementById('logout');
-        this.showLeaderboardButton = document.getElementById('show-leaderboard');
         
         // Game state
         this.cards = [];
         this.flippedCards = [];
         this.moves = 0;
-        this.score = 0;
         this.isLocked = false;
         this.gameStarted = false;
         this.timerInterval = null;
@@ -70,7 +64,6 @@ class MemoryGame {
 
         // Initialize handlers
         this.initializeLogin();
-        this.initializeLeaderboard();
     }
 
     initializeLogin() {
@@ -104,17 +97,6 @@ class MemoryGame {
                 clearInterval(this.timerInterval);
             });
         }
-    }
-
-    initializeLeaderboard() {
-        // Modal buttons
-        this.showLeaderboardButton.addEventListener('click', () => {
-            this.leaderboardModal.classList.add('show');
-            this.updateLeaderboard('all');
-        });
-
-        // Initial leaderboard preview
-        this.updateLeaderboardPreview();
     }
 
     validateUserId(userId) {
@@ -245,16 +227,12 @@ class MemoryGame {
     }
 
     startTimer() {
+        clearInterval(this.timerInterval);
         this.timerInterval = setInterval(() => {
             this.timeLeft--;
             this.timerDisplay.textContent = this.timeLeft;
-            
-            // Add warning class when time is running low
-            if (this.timeLeft <= 5) {
-                this.timerDisplay.classList.add('warning');
-            }
-            
             if (this.timeLeft <= 0) {
+                clearInterval(this.timerInterval);
                 this.gameOver(false);
             }
         }, 1000);
@@ -262,30 +240,13 @@ class MemoryGame {
 
     gameOver(won) {
         clearInterval(this.timerInterval);
-        this.isLocked = true;
         
         if (won) {
-            // Calculate and update score
-            const timeBonus = Math.floor(this.timeLeft * 10);
-            const movesPenalty = Math.max(0, (this.moves - this.levels[this.currentLevel].pairs * 2) * 5);
-            const levelScore = (this.levels[this.currentLevel].pairs * 100) + timeBonus - movesPenalty;
-            this.score += levelScore;
-
-            // Update best time if better
-            const bestTimes = JSON.parse(localStorage.getItem('bestTimes') || '{}');
-            const userBestTimes = bestTimes[this.currentUser] || {};
-            if (!userBestTimes[this.currentLevel] || this.timeLeft > userBestTimes[this.currentLevel]) {
-                userBestTimes[this.currentLevel] = this.timeLeft;
-                bestTimes[this.currentUser] = userBestTimes;
-                localStorage.setItem('bestTimes', JSON.stringify(bestTimes));
-            }
-
             // Check if there's a next level
             const nextLevel = this.currentLevel + 1;
             if (this.levels[nextLevel]) {
                 setTimeout(() => {
-                    const message = `Level ${this.currentLevel} Complete!\nScore: ${levelScore}\nTime Bonus: ${timeBonus}\nMoves Penalty: ${movesPenalty}\n\nReady for Level ${nextLevel}?`;
-                    if (confirm(message)) {
+                    if (confirm(`Great job! Ready for Level ${nextLevel}?`)) {
                         this.currentLevel = nextLevel;
                         this.init();
                     }
@@ -293,47 +254,38 @@ class MemoryGame {
             } else {
                 // Game completed
                 setTimeout(() => {
-                    alert(`Congratulations! You've completed all levels!\nFinal Score: ${this.score}`);
-                    // Reset to level 1
+                    alert("Congratulations! You've completed all levels! 🎉");
                     this.currentLevel = 1;
-                    this.score = 0;
                     this.init();
                 }, 500);
             }
         } else {
-            // Game lost (time ran out)
-            setTimeout(() => {
-                alert('Time\'s up! Try again?');
+            // Time ran out - show game over modal
+            const gameOverModal = document.getElementById('game-over-modal');
+            const finalLevel = document.getElementById('final-level');
+            const finalMoves = document.getElementById('final-moves');
+            const finalScore = document.getElementById('final-score');
+
+            // Calculate score based on level and moves
+            const levelScore = (this.levels[this.currentLevel].pairs * 50) - (this.moves * 2);
+            const score = Math.max(0, levelScore); // Ensure score doesn't go below 0
+
+            // Update modal content
+            finalLevel.textContent = this.currentLevel;
+            finalMoves.textContent = this.moves;
+            finalScore.textContent = score;
+
+            // Show modal
+            gameOverModal.classList.add('show');
+
+            // Handle try again button
+            const tryAgainButton = document.getElementById('try-again');
+            tryAgainButton.onclick = () => {
+                gameOverModal.classList.remove('show');
+                this.currentLevel = 1;
                 this.init();
-            }, 500);
+            };
         }
-    }
-
-    updateLeaderboard(level = 'all') {
-        const scores = JSON.parse(localStorage.getItem('scores') || '[]');
-        let filteredScores = scores;
-        if (level !== 'all') {
-            filteredScores = scores.filter(s => s.level === parseInt(level));
-        }
-
-        this.leaderboardList.innerHTML = filteredScores
-            .slice(0, 10)
-            .map((score, index) => `
-                <div class="preview-score">
-                    ${index + 1}. ${score.user} - Level ${score.level} - ${score.score} pts
-                </div>
-            `).join('');
-    }
-
-    updateLeaderboardPreview() {
-        const scores = JSON.parse(localStorage.getItem('scores') || '[]');
-        this.leaderboardList.innerHTML = scores
-            .slice(0, 5)
-            .map((score, index) => `
-                <div class="preview-score">
-                    ${index + 1}. ${score.user} - Level ${score.level} - ${score.score} pts
-                </div>
-            `).join('');
     }
 }
 
