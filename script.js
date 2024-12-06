@@ -70,7 +70,7 @@ class MemoryGame {
             '<img src="https://na-703498136.imgix.net/diamond%20hand.png" class="card-icon" alt="DIAMOND-HANDS">',
             '<img src="https://na-703498136.imgix.net/doge.png" class="card-icon" alt="DOGE">',
             '<img src="https://na-703498136.imgix.net/dai.png" class="card-icon" alt="DAI">',
-            '<i class="fas fa-cash-register"></i>',
+            '<img src="https://na-703498136.imgix.net/register.png" class="card-icon" alt="REGISTER">',
             '<img src="https://na-703498136.imgix.net/xrp.png" class="card-icon" alt="XRP">',
             '<img src="https://na-703498136.imgix.net/sonic.png" class="card-icon" alt="SONIC">',
             '<img src="https://na-703498136.imgix.net/aero.png" class="card-icon" alt="AERO">'
