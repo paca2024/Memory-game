@@ -43,6 +43,8 @@ class MemoryGame {
         this.bonusTimeEarned = false;
         this.alsuiBonusEarned = false;
         this.currentUser = null;
+        this.matchedPairs = 0;
+        this.isProcessing = false;
 
         // Level configurations
         this.levels = {
@@ -211,17 +213,7 @@ class MemoryGame {
 
         // Create and add cards to the board
         shuffledCards.forEach(symbol => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-                <div class="card-inner">
-                    <div class="card-front"></div>
-                    <div class="card-back">
-                        ${symbol}
-                    </div>
-                </div>
-            `;
-            card.addEventListener('click', () => this.handleCardClick(card));
+            const card = this.createCard(symbol);
             this.gameBoard.appendChild(card);
             this.cards.push(card);
         });
@@ -237,54 +229,67 @@ class MemoryGame {
         this.bestTimeDisplay.textContent = `Best Time: ${levelBestTime}`;
     }
 
-    handleCardClick(card) {
-        if (this.isLocked || card.classList.contains('matched') || this.flippedCards.includes(card)) {
-            return;
-        }
+    createCard(symbol) {
+        const template = document.getElementById('card-template');
+        const card = template.content.cloneNode(true).querySelector('.card');
+        const front = card.querySelector('.card-front');
+        front.innerHTML = symbol;
+        
+        card.addEventListener('click', () => this.flipCard(card));
+        return card;
+    }
 
-        if (!this.gameStarted) {
-            this.startTimer();
-            this.gameStarted = true;
-        }
+    flipCard(card) {
+        if (this.isProcessing || card.classList.contains('flipped') || this.flippedCards.length >= 2) return;
 
         card.classList.add('flipped');
         this.flippedCards.push(card);
 
         if (this.flippedCards.length === 2) {
+            this.isProcessing = true;
             this.moves++;
-            this.movesDisplay.textContent = this.moves;
-            this.isLocked = true;
+            document.getElementById('moves').textContent = this.moves;
 
-            const [firstCard, secondCard] = this.flippedCards;
-            const firstSymbol = firstCard.querySelector('.card-back').innerHTML.trim();
-            const secondSymbol = secondCard.querySelector('.card-back').innerHTML.trim();
-
-            if (firstSymbol === secondSymbol) {
+            const [card1, card2] = this.flippedCards;
+            if (card1.querySelector('.card-front').innerHTML === card2.querySelector('.card-front').innerHTML) {
                 // Match found
                 setTimeout(() => {
-                    firstCard.classList.add('matched');
-                    secondCard.classList.add('matched');
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    this.matchedPairs++;
+                    this.checkLevelComplete();
                     this.flippedCards = [];
-                    this.isLocked = false;
-
-                    // Check for level completion
-                    const matchedPairs = document.querySelectorAll('.card.matched').length / 2;
-                    if (matchedPairs === this.levels[this.currentLevel].pairs) {
-                        this.gameOver(true);
-                    }
+                    this.isProcessing = false;
                 }, 500);
             } else {
-                // No match - flip cards back
+                // No match
                 setTimeout(() => {
-                    firstCard.classList.remove('flipped');
-                    secondCard.classList.remove('flipped');
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
                     this.flippedCards = [];
-                    this.isLocked = false;
+                    this.isProcessing = false;
                 }, 1000);
             }
-
-            this.updateScore();
         }
+    }
+
+    checkLevelComplete() {
+        if (this.matchedPairs === this.currentLevel + 2) {
+            const gameBoard = document.querySelector('.game-board');
+            gameBoard.classList.add('level-complete');
+            
+            setTimeout(() => {
+                gameBoard.classList.remove('level-complete');
+                this.currentLevel++;
+                document.getElementById('current-level').textContent = this.currentLevel;
+                this.startLevel();
+            }, 1000);
+        }
+    }
+
+    startLevel() {
+        this.matchedPairs = 0;
+        this.init();
     }
 
     startTimer() {
@@ -373,7 +378,7 @@ class MemoryGame {
 
     addEventListeners() {
         this.cards.forEach(card => {
-            card.addEventListener('click', () => this.handleCardClick(card));
+            card.addEventListener('click', () => this.flipCard(card));
         });
 
         this.restartButton.addEventListener('click', () => {

@@ -22,24 +22,28 @@
     </div>
 
     <div id="game-container" class="container" style="display: none;">
-        <h1>Memory Matching Game</h1>
-        <div class="user-info">
-            <span id="current-user">User: </span>
-            <span id="current-score">Score: 0</span>
+        <div class="header">
+            <h1>Crypto Memory Game</h1>
+            <div class="game-info">
+                <div class="level">Level: <span id="current-level">1</span></div>
+                <div class="moves">Moves: <span id="moves">0</span></div>
+                <div class="timer">Time: <span id="timer">15</span>s</div>
+            </div>
         </div>
-        <div class="level-info">
-            <span>Level: <span id="current-level">1</span></span>
-            <span id="best-time-display">Best Time: --</span>
+        <div id="game-board" class="game-board"></div>
+        <div class="controls">
+            <button id="restart" class="btn">Restart Game</button>
+            <button id="logout" class="secondary-button">Change User</button>
+            <button id="show-leaderboard" class="secondary-button">Leaderboard</button>
         </div>
-        <div class="stats">
-            <span>Time Left: <span id="timer">15</span>s</span>
-            <span>Moves: <span id="moves">0</span></span>
-        </div>
-        <div class="game-board"></div>
-        <button id="restart">Restart</button>
-        <button id="logout" class="secondary-button">Change User</button>
-        <button id="show-leaderboard" class="secondary-button">Leaderboard</button>
     </div>
+
+    <template id="card-template">
+        <div class="card">
+            <div class="card-face card-front"></div>
+            <div class="card-face card-back"></div>
+        </div>
+    </template>
 
     <div id="leaderboard-modal" class="modal">
         <div class="modal-content">
