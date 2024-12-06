@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Memory Matching Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="login-screen" class="container">
+        <h1>Memory Matching Game</h1>
+        <div class="login-form">
+            <input type="text" id="user-id" placeholder="Enter your User ID" maxlength="20">
+            <button id="start-game">Start Game</button>
+            <div id="login-error" class="error-message"></div>
+        </div>
+        <div class="leaderboard-preview">
+            <h2>Top Players</h2>
+            <div id="leaderboard-list"></div>
+        </div>
+    </div>
+
+    <div id="game-container" class="container" style="display: none;">
+        <h1>Memory Matching Game</h1>
+        <div class="user-info">
+            <span id="current-user">User: </span>
+            <span id="current-score">Score: 0</span>
+        </div>
+        <div class="level-info">
+            <span>Level: <span id="current-level">1</span></span>
+            <span id="best-time-display">Best Time: --</span>
+        </div>
+        <div class="stats">
+            <span>Time Left: <span id="timer">15</span>s</span>
+            <span>Moves: <span id="moves">0</span></span>
+        </div>
+        <div class="game-board"></div>
+        <button id="restart">Restart</button>
+        <button id="logout" class="secondary-button">Change User</button>
+        <button id="show-leaderboard" class="secondary-button">Leaderboard</button>
+    </div>
+
+    <div id="leaderboard-modal" class="modal">
+        <div class="modal-content">
+            <h2>Leaderboard</h2>
+            <div class="tabs">
+                <button class="tab-button active" data-level="all">All Levels</button>
+                <button class="tab-button" data-level="1">Level 1</button>
+                <button class="tab-button" data-level="2">Level 2</button>
+                <button class="tab-button" data-level="3">Level 3</button>
+            </div>
+            <div class="leaderboard-container">
+                <table id="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th>Level</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body"></tbody>
+                </table>
+            </div>
+            <button id="close-leaderboard" class="secondary-button">Close</button>
+        </div>
+    </div>
+
+    <div id="game-over-modal" class="modal">
+        <div class="modal-content">
+            <h2>Game Over!</h2>
+            <div class="game-over-stats">
+                <p>Player: <span id="final-player"></span></p>
+                <p>Level: <span id="final-level"></span></p>
+                <p>Score: <span id="final-score"></span></p>
+                <p>Time Left: <span id="final-time"></span></p>
+            </div>
+            <div class="game-over-buttons">
+                <button id="try-again">Try Again</button>
+                <button id="view-leaderboard" class="secondary-button">View Leaderboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
